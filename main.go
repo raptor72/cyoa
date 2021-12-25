@@ -1,11 +1,14 @@
 package main
 
 import (
-    "os"
+//    "io"
+//    "os"
     "fmt"
     "io/ioutil"
     "encoding/json"
     "html/template"
+    "net/http"
+    "strings"
 )
 
 type chapter struct {
@@ -32,7 +35,7 @@ const tmpl = `
         <ul>
         {{ range .Options}}
         <li>
-        <a href="/cyoa/{{ .Arc }}">
+        <a href="/{{ .Arc }}">
         {{ .Text }}
         </a>
         </li>
@@ -40,6 +43,33 @@ const tmpl = `
         </ul>
     </body>
 </html>`
+
+var t = template.New("fieldname example")
+
+func MapHandler(pathsToUrls map[string]chapter, fallback http.Handler) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+//        fmt.Println(r.URL.Path)
+        clear_path := strings.Replace(r.URL.Path, "/", "", 1)
+        if val, ok := pathsToUrls[clear_path]; ok {
+            fmt.Println("is ok")
+            t.Execute(w, val)
+            return
+        }
+        fallback.ServeHTTP(w, r)
+    }
+}
+
+func defaultMux() *http.ServeMux {
+    mux := http.NewServeMux()
+    mux.HandleFunc("/", hello)
+    return mux
+}
+
+func hello(w http.ResponseWriter, r *http.Request) {
+//    fmt.Fprintln(w, "Hello, world!")
+    http.Redirect(w, r, "/intro", 301)
+}
+
 
 func main() {
     story := make(map[string]chapter)
@@ -52,18 +82,10 @@ func main() {
         return
     }
 
-    t := template.New("fieldname example")
     t, _ = t.Parse(tmpl)
 
-
-    for _, value := range(story) {
-//        fmt.Println(idx, value)
-//        fmt.Println("####################")
-//      fmt.Println(value.Options)
-//        Options := value.Options
-        t.Execute(os.Stdout, value)
-    }
-
-//    fmt.Println(story["debate"])
-
+    mux := defaultMux()
+    mapHandler := MapHandler(story, mux)
+    fmt.Println("Starting the server on :8080")
+    http.ListenAndServe(":8080", mapHandler)
 }
