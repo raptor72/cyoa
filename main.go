@@ -7,6 +7,7 @@ import (
     "html/template"
     "net/http"
     "strings"
+    "flag"
 )
 
 type chapter struct {
@@ -113,8 +114,12 @@ func hello(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+    filename := flag.String("file", "gopher.json", "The JSON file with CYOA story")
+    flag.Parse()
+    fmt.Printf("Using the story in %s.\n", *filename)
     story := make(map[string]chapter)
-    dataJSON, err := ioutil.ReadFile("gopher.json")
+
+    dataJSON, err := ioutil.ReadFile(*filename)
     if err != nil {
         fmt.Println(err)
     }
