@@ -1,8 +1,6 @@
 package main
 
 import (
-//    "io"
-//    "os"
     "fmt"
     "io/ioutil"
     "encoding/json"
@@ -26,8 +24,8 @@ const tmpl = `
 <!DOCTYPE html>
 <html>
     <head>
-	<meta charset="UTF-8">
-	<title>Choose Tour Own Adventure</title>
+        <meta charset="UTF-8">
+        <title>Choose Tour Own Adventure</title>
     </head>
     <body>
         <h1>{{.Title}}</h1>
@@ -48,10 +46,11 @@ var t = template.New("fieldname example")
 
 func MapHandler(pathsToUrls map[string]chapter, fallback http.Handler) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-//        fmt.Println(r.URL.Path)
         clear_path := strings.Replace(r.URL.Path, "/", "", 1)
+        if r.URL.Path == "/" || r.URL.Path == "/info" {
+            clear_path = "intro"
+        }
         if val, ok := pathsToUrls[clear_path]; ok {
-            fmt.Println("is ok")
             t.Execute(w, val)
             return
         }
@@ -66,8 +65,8 @@ func defaultMux() *http.ServeMux {
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {
-//    fmt.Fprintln(w, "Hello, world!")
-    http.Redirect(w, r, "/intro", 301)
+    http.NotFound(w, r)
+    return
 }
 
 
