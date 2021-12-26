@@ -1,25 +1,14 @@
 package main
 
 import (
+    "os"
     "fmt"
-    "io/ioutil"
-    "encoding/json"
     "html/template"
     "net/http"
     "strings"
     "flag"
+    "cyoa"
 )
-
-type chapter struct {
-    Title   string `json:"title"`
-    Story   []string `json:"story"`
-    Options []chapterOption `json:"options"`
-}
-
-type chapterOption struct {
-   Text string `json:"text"`
-   Arc string `json:"arc"`
-}
 
 const tmpl = `
 <!DOCTYPE html>
@@ -87,7 +76,7 @@ const tmpl = `
 
 var t = template.New("fieldname example")
 
-func MapHandler(pathsToUrls map[string]chapter, fallback http.Handler) http.HandlerFunc {
+func MapHandler(pathsToUrls cyoa.Story, fallback http.Handler) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         clear_path := strings.Replace(r.URL.Path, "/", "", 1)
         if r.URL.Path == "/" || r.URL.Path == "/info" {
@@ -112,20 +101,19 @@ func hello(w http.ResponseWriter, r *http.Request) {
     return
 }
 
-
 func main() {
     filename := flag.String("file", "gopher.json", "The JSON file with CYOA story")
     flag.Parse()
     fmt.Printf("Using the story in %s.\n", *filename)
-    story := make(map[string]chapter)
 
-    dataJSON, err := ioutil.ReadFile(*filename)
+    f, err := os.Open(*filename)
     if err != nil {
         fmt.Println(err)
     }
-    if err := json.Unmarshal(dataJSON, &story); err != nil {
+
+    story, err := cyoa.JsonStory(f)
+    if err != nil {
         fmt.Println(err)
-        return
     }
 
     t, _ = t.Parse(tmpl)
