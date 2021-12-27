@@ -8,6 +8,7 @@ import (
     "strings"
     "flag"
     "cyoa"
+    "log"
 )
 
 const tmpl = `
@@ -102,6 +103,7 @@ func FallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+    port := flag.Int("port", 8080, "the  port start the CYOA web application on")
     filename := flag.String("file", "gopher.json", "The JSON file with CYOA story")
     flag.Parse()
     fmt.Printf("Using the story in %s.\n", *filename)
@@ -120,6 +122,6 @@ func main() {
 
     mux := defaultMux()
     mapHandler := StoryHandler(story, mux)
-    fmt.Println("Starting the server on http://127.0.0.1:8080")
-    http.ListenAndServe(":8080", mapHandler)
+    fmt.Printf("Starting the server on http://127.0.0.1:%d\n", *port)
+    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), mapHandler))
 }
