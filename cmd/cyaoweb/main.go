@@ -15,7 +15,7 @@ const tmpl = `
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Choose Tour Own Adventure</title>
+        <title>Choose Your Own Adventure</title>
     </head>
     <body>
         <section class="page">
@@ -76,13 +76,13 @@ const tmpl = `
 
 var t = template.New("fieldname example")
 
-func MapHandler(pathsToUrls cyoa.Story, fallback http.Handler) http.HandlerFunc {
+func StoryHandler(s cyoa.Story, fallback http.Handler) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         clear_path := strings.Replace(r.URL.Path, "/", "", 1)
         if r.URL.Path == "/" || r.URL.Path == "/info" {
             clear_path = "intro"
         }
-        if val, ok := pathsToUrls[clear_path]; ok {
+        if val, ok := s[clear_path]; ok {
             t.Execute(w, val)
             return
         }
@@ -92,11 +92,11 @@ func MapHandler(pathsToUrls cyoa.Story, fallback http.Handler) http.HandlerFunc 
 
 func defaultMux() *http.ServeMux {
     mux := http.NewServeMux()
-    mux.HandleFunc("/", hello)
+    mux.HandleFunc("/", FallbackHandler)
     return mux
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
+func FallbackHandler(w http.ResponseWriter, r *http.Request) {
     http.NotFound(w, r)
     return
 }
@@ -119,7 +119,7 @@ func main() {
     t, _ = t.Parse(tmpl)
 
     mux := defaultMux()
-    mapHandler := MapHandler(story, mux)
-    fmt.Println("Starting the server on :8080")
+    mapHandler := StoryHandler(story, mux)
+    fmt.Println("Starting the server on http://127.0.0.1:8080")
     http.ListenAndServe(":8080", mapHandler)
 }
