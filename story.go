@@ -4,7 +4,8 @@ import (
     "net/http"
     "strings"
     "io"
-	"encoding/json"
+    "log"
+    "encoding/json"
     "html/template"
 )
 
@@ -83,17 +84,24 @@ type handler struct {
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     tpl := template.Must(template.New("").Parse(tmpl))
 
-    clear_path := strings.Replace(r.URL.Path, "/", "", 1)
-    if r.URL.Path == "/" || r.URL.Path == "/info" {
-        clear_path = "intro"
+    clear_path := strings.TrimSpace(r.URL.Path)
+
+    if clear_path == "" || clear_path == "/" {
+        clear_path = "/intro"
     }
-    if val, ok := h.s[clear_path]; ok {
-        err := tpl.Execute(w, val)
+
+    // "/intro" => "intro"
+    clear_path = clear_path[1:]
+
+    if chapter, ok := h.s[clear_path]; ok {
+        err := tpl.Execute(w, chapter)
         if err != nil {
-            panic(err)
+            log.Printf("%v", err)
+            http.Error(w, "Something went wrong...", http.StatusInternalServerError)
         }
-        
+        return
     }
+    http.Error(w, "Chapter not found.", http.StatusNotFound)
 }
 
 func JsonStory(r io.Reader) (Story, error) {
