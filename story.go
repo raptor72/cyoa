@@ -9,6 +9,12 @@ import (
     "html/template"
 )
 
+func init() {
+	tpl = template.Must(template.New("").Parse(tmpl))
+}
+
+var tpl *template.Template
+
 const tmpl = `
 <!DOCTYPE html>
 <html>
@@ -73,28 +79,43 @@ const tmpl = `
     </body>
 </html>`
 
-func NewHandler(s Story) http.Handler {
-    return handler{s}
+type HandlerOption func(h *handler)
+
+func WithTemplate(t *template.Template) HandlerOption {
+    return func(h *handler) {
+        h.t = t
+    }
+}
+
+
+func NewHandler(s Story, opts ...HandlerOption) http.Handler {
+    h := handler{s, tpl, defaultPathFn}
+    for _, opt := range opts {
+        opt(&h)
+    }
+
+    return h
 }
 
 type handler struct {
-    s Story
+    s      Story
+    t      *template.Template
+    pathFn func(r *http.Request) string
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    tpl := template.Must(template.New("").Parse(tmpl))
-
+func defaultPathFn(r *http.Request) string {
     clear_path := strings.TrimSpace(r.URL.Path)
-
     if clear_path == "" || clear_path == "/" {
         clear_path = "/intro"
     }
-
     // "/intro" => "intro"
-    clear_path = clear_path[1:]
+    return clear_path[1:]
+}
 
-    if chapter, ok := h.s[clear_path]; ok {
-        err := tpl.Execute(w, chapter)
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    path := h.pathFn(r)
+    if chapter, ok := h.s[path]; ok {
+        err := h.t.Execute(w, chapter)
         if err != nil {
             log.Printf("%v", err)
             http.Error(w, "Something went wrong...", http.StatusInternalServerError)

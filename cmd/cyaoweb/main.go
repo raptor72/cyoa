@@ -7,6 +7,7 @@ import (
     "flag"
     "cyoa"
     "log"
+    // "html/template" // need if we pass template
 )
 
 
@@ -26,7 +27,11 @@ func main() {
         fmt.Println(err)
     }
 
-    h := cyoa.NewHandler(story)
+    // way to pass custom template inside
+    // tpl := template.Must(template.New("").Parse("Hello!"))
+    // h := cyoa.NewHandler(story, cyoa.WithTemplate(tpl))
+
+    h := cyoa.NewHandler(story) // keep the default options
     fmt.Printf("Starting the server on http://127.0.0.1:%d\n", *port)
     log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
 }
