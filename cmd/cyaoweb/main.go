@@ -75,11 +75,12 @@ const tmpl = `
     </body>
 </html>`
 
-var t = template.New("fieldname example")
+var t = template.New("example")
 
 func StoryHandler(s cyoa.Story, fallback http.Handler) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         clear_path := strings.Replace(r.URL.Path, "/", "", 1)
+        fmt.Println(r.URL, r.RemoteAddr, r.URL.Scheme, r.Host)
         if r.URL.Path == "/" || r.URL.Path == "/info" {
             clear_path = "intro"
         }
@@ -99,7 +100,6 @@ func defaultMux() *http.ServeMux {
 
 func FallbackHandler(w http.ResponseWriter, r *http.Request) {
     http.NotFound(w, r)
-    return
 }
 
 func main() {
